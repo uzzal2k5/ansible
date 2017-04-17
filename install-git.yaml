@@ -1,0 +1,80 @@
+---
+  - hosts: github
+    remote_user: root
+    tasks:
+      - name: Install Git Lab
+        yum:
+          name: git
+          state: latest
+
+      - name: upgrade os
+        yum: 
+          name: git
+          state: latest
+          update_cache: yes
+      # Installing Build Tools
+      - name: Install build tools
+        yum:
+          name: "@Development tools"
+          state: present
+        become: yes
+
+      - name: Install dependencies packages
+        yum:
+          name: "{{item}}"
+          state: installed
+        with_items:
+            - wget
+            - gettext-devel
+            - openssl-devel
+            - perl-CPAN
+            - perl-devel
+            - zlib-devel
+            - curl
+            - libcurl-devel
+            - expat-devel
+        become: yes
+      - name: Downloading v2.1.2.tar.gz
+        get_url:
+          url: "https://github.com/git/git/archive/v2.1.2.tar.gz"
+          dest: /opt/git.tar.gz
+          mode: 0644
+          
+      # Unarchive git file atha is already downloaded into remote machine
+      - name: unarchive git
+        unarchive:
+          src: /opt/git.tar.gz
+          dest: /opt/
+          remote_src: True
+      # INSTALL AND cONFIGURE GIT
+      #- name: Install and Configure Git
+      #- make:
+      #    chdir: /opt/git-2.1.2"
+      - make:
+          chdir: /opt/git-2.1.2
+          target: install
+        become: yes
+      # Setting Up git  
+          
+      # Firewall Setting
+    
+      - name: firewalld enabled
+        firewalld:
+          service: https
+          #service: "{{item.service}}"
+          permanent: true
+          state: enabled
+          #with_items:
+          #  - { service: http }
+          #  - { service: https }
+          #  - { service: dns }          
+          service: http
+          permanent: true
+          state: enabled
+        notify:     Reload firewalld
+      - name: Reload firewalld
+        command: firewall-cmd --reload
+      
+
+
+     
